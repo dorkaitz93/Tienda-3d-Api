@@ -33,4 +33,5 @@ class Pedido extends Model
                     ->withPivot('cantidad', 'precio_unitario')
                     ->withTimestamps();
     }
+    
 }

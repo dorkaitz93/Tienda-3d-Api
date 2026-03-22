@@ -1,26 +1,34 @@
 <?php
 
 use App\Http\Controllers\ProductoController;
-use App\Http\Controllers\CategoriaController; // Importante
-use App\Http\Controllers\PedidoController;    // Importante
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// Ruta de comprobación
-Route::get("/estado", function(){
-    return response()->json([
-        "mensaje" => "El Backend de la tienda funciona correctamente",
-        "estado" => "OK"
-    ]);
-});
+// --- RUTAS PÚBLICAS ---
+Route::post("/login", [AuthController::class, 'login']);
+Route::get("/estado", fn() => response()->json(["mensaje" => "OK"]));
 
-// --- RUTAS DE LA TIENDA ---
-
-// 1. Productos (Ya la tenías, ¡perfecta!)
-Route::apiResource("productos", ProductoController::class);
-
-// 2. Categorías (Para que Vue pinte el menú desplegable)
+// Ver productos y categorías es público (para que los clientes compren)
+Route::get("productos", [ProductoController::class, 'index']);
+Route::get("productos/{id}", [ProductoController::class, 'show']);
 Route::get("categorias", [CategoriaController::class, 'index']);
-Route::get("categorias/{categoria:slug}", [CategoriaController::class, 'show']);
 
-// 3. Pedidos (Para procesar la compra del carrito)
+// Los pedidos suelen ser públicos porque un "invitado" debe poder comprar
 Route::post("pedidos", [PedidoController::class, 'store']);
+
+
+// --- RUTAS PROTEGIDAS ---
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Solo el admin puede crear, editar o borrar productos
+    Route::post("productos", [ProductoController::class, 'store']);
+    Route::put("productos/{id}", [ProductoController::class, 'update']);
+    Route::delete("productos/{id}", [ProductoController::class, 'destroy']);
+
+    Route::get('pedidos', [PedidoController::class, 'index']);
+    
+    // Ruta para cerrar sesión
+    Route::post("/logout", [AuthController::class, 'logout']);
+});
